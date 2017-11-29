@@ -24,7 +24,8 @@ import subprocess
 #config stuff
 config = ConfigParser.RawConfigParser()
 startfolder = os.path.dirname(sys.argv[0])
-parexefile = os.path.join(os.path.dirname(sys.argv[0]), 'par2j.exe')
+#parexefile = os.path.join(os.path.dirname(sys.argv[0]), 'par2j.exe')
+parexefile = os.path.join(os.path.dirname(sys.argv[0]), 'par2rename.exe')
 config.readfp(open(os.path.join(os.path.dirname(sys.argv[0]), 'pySR.cfg')))
 
 #sab things
@@ -64,17 +65,16 @@ print '| To address:                              |'
 print '| 14QFusmzBTAo9FhH7x7puHNkdCps8vamVV       |'
 print '+------------------------------------------+'
 print ''
-print 'v2 - with par2 renaming for spotnet 1.8.x'
-print ''
-print '   _____             _              _     __   ___   _____       '
-print '  / ____|           | |            | |   /_ | / _ \ | ____|      '
-print ' | (___  _ __   ___ | |_ _ __   ___| |_   | || (_) || |__  __  __'
-print "  \___ \| '_ \\ / _ \\| __| '_ \\ / _ \\ __|  | | > _ < |___ \ \\ \\/ /"
-print '  ____) | |_) | (_) | |_| | | |  __/ |_   | || (_) | ___) | >  < '
-print ' |_____/| .__/ \___/ \__|_| |_|\___|\__|  |_(_)___(_)____(_)_/\\_\\'
-print '        | |                                                      '
-print '        |_|                                                      '
-
+print 'v3 - with fast par2 renaming for Spotnet Classic'
+print ""
+print "   _____                _                 _      _____  _                   _       "
+print "  / ____|              | |               | |    / ____|| |                 (_)      "
+print " | (___   _ __    ___  | |_  _ __    ___ | |_  | |     | |  __ _  ___  ___  _   ___"
+print "  \___ \ | '_ \\  / _ \ | __|| \'_ \  / _ \| __| | |     | | / _` |/ __|/ __|| | / __|"
+print "  ____) || |_) || (_) || |_ | | | ||  __/| |_  | |____ | || (_| |\__ \\\__ \| || (__ "
+print " |_____/ | .__/  \___/  \__||_| |_| \___| \__|  \_____||_| \__,_||___/|___/|_| \___|"
+print "         | |                                                                        "
+print "         |_|                                                                        "
 if int(job_res) != 0:
 	print 'To prevent bad stuff from happening we do not run this script on jobs that are not succesfully completed (par/rar fail)'
 	print 'If you want to run this anyway try this in commandline:'
@@ -102,51 +102,56 @@ def find_par2(dir):
 find_par2(final_dir)
 
 filename, ext = os.path.splitext(r_file[0])
-print 'Found extension! ({})'.format(ext)
+#print 'Found extension! ({})'.format(ext)
 
-print "Script directory ",startfolder
+#print "Script directory ",startfolder
 
 if os.path.isfile(parexefile):
+	R = -1
 	if par_file != '':
 		dir_name = os.path.dirname(par_file)
 		file_name = os.path.basename(par_file)
-		p_file = '"' + par_file + '"'
-		print 'par2j: ' + p_file
-		R=subprocess.call([parexefile,'r '+ p_file,'*'],cwd=dir_name)
-		print 'Par2j Result=',R
-		if R == 16:
-			print 'par2j renaming done.'
+		#p_file = '"' + par_file + '"'
+		p_file = par_file
+		print 'par2rename using ' + p_file
+		#R=subprocess.call([parexefile,'r '+ p_file,'*'],cwd=dir_name)
+		R=subprocess.call([parexefile,p_file])
+		print 'Par2rename Result=',R
+		#if R == 16:
+		if R == 0:
+			print 'par2rename renaming done.'
 			# get largest file to determine job-name
 			r_file = ['',-1]
 			find_par2 (final_dir)
 			if r_file[1] > 0:
 				job_name, ext = os.path.splitext(os.path.basename(r_file[0]))
-				print "New jobname: " + job_name
 else:
-	print 'par2j.exe not found, skipped par2j renaming'
+	print 'par2rename.exe not found, skipped par2rename execution'
+	R = -1
 
-print "\n+Move / Renaming process+"
-if r_file[1] != -1:
-	filename = os.path.basename(r_file[0])
-	print 'Found:', filename
+if R <> 0:
+	print "\n+Move / Renaming process+"
+	if r_file[1] != -1:
+		filename = os.path.basename(r_file[0])
+		print 'Found:', filename
 
-old_name = r_file[0]
-print 'Old name:', old_name
+	old_name = r_file[0]
+	print 'Old name:', old_name
 
-if any(ext == val for val in extlist):
-	print 'Extention supported!', ext
-	new_file = os.path.join(final_dir, job_name + ext)
-	print 'New name:', new_file
-	os.rename(old_name, new_file)
-else:
-	print 'This file has an extension that is not supported to prevent wrong renames like multi-file movies (dvds etc.):', ext
-	sys.exit(0)
+	if any(ext == val for val in extlist):
+		print 'Extention supported!', ext
+		new_file = os.path.join(final_dir, job_name + ext)
+		print 'New name:', new_file
+		os.rename(old_name, new_file)
+	else:
+		print 'This file has an extension that is not supported to prevent wrong renames like multi-file movies (dvds etc.):', ext
+		sys.exit(0)
 
-for s_ext in sublist:
-	if os.path.isfile(filename + s_ext):
-		os.rename(filename + s_ext, os.path.join(final_dir, job_name + s_ext))
-		print 'We found and renamed a subtitle file with the extension', s_ext
-# end of rename block
+	for s_ext in sublist:
+		if os.path.isfile(filename + s_ext):
+			os.rename(filename + s_ext, os.path.join(final_dir, job_name + s_ext))
+			print 'We found and renamed a subtitle file with the extension', s_ext
+	# end of rename block
 
 #do cleanup
 def cleanup(top):
